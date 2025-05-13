@@ -1,0 +1,153 @@
+import java.io.*;
+import java.util.*;
+
+class Student implements Serializable {
+    private int roll;
+    private String name;
+    private String course;
+
+    public Student(int roll, String name, String course) {
+        this.roll = roll;
+        this.name = name;
+        this.course = course;
+    }
+
+    public int getRoll() {
+        return roll;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public String getCourse() {
+        return course;
+    }
+
+    public void display() {
+        System.out.printf("Roll: %d | Name: %s | Course: %s\n", roll, name, course);
+    }
+}
+
+class StudentManager {
+    private Map<Integer, Student> studentMap = new HashMap<>();
+    private final String fileName = "students.dat";
+
+    public StudentManager() {
+        loadData();
+    }
+
+    public void addStudent(Student s) {
+        if (studentMap.containsKey(s.getRoll())) {
+            System.out.println("Roll already exists!");
+        } else {
+            studentMap.put(s.getRoll(), s);
+            System.out.println("Student added.");
+        }
+    }
+
+    public void viewAll() {
+        if (studentMap.isEmpty()) {
+            System.out.println("No students to display.");
+            return;
+        }
+        for (Student s : studentMap.values()) {
+            s.display();
+        }
+    }
+
+    public void searchStudent(int roll) {
+        Student s = studentMap.get(roll);
+        if (s != null) s.display();
+        else System.out.println("Student not found.");
+    }
+
+    public void deleteStudent(int roll) {
+        if (studentMap.remove(roll) != null)
+            System.out.println("Student deleted.");
+        else
+            System.out.println("Student not found.");
+    }
+
+    public void sortByName() {
+        List<Student> list = new ArrayList<>(studentMap.values());
+        list.sort(Comparator.comparing(Student::getName));
+        for (Student s : list) s.display();
+    }
+
+    public void sortByRoll() {
+        List<Student> list = new ArrayList<>(studentMap.values());
+        list.sort(Comparator.comparingInt(Student::getRoll));
+        for (Student s : list) s.display();
+    }
+
+    public void saveData() {
+        try (ObjectOutputStream out = new ObjectOutputStream(new FileOutputStream(fileName))) {
+            out.writeObject(studentMap);
+            System.out.println("Data saved successfully.");
+        } catch (IOException e) {
+            System.out.println("Error saving data.");
+        }
+    }
+
+    @SuppressWarnings("unchecked")
+    public void loadData() {
+        try (ObjectInputStream in = new ObjectInputStream(new FileInputStream(fileName))) {
+            studentMap = (HashMap<Integer, Student>) in.readObject();
+            System.out.println("Data loaded from file.");
+        } catch (IOException | ClassNotFoundException e) {
+            System.out.println("No previous data found. Starting fresh.");
+        }
+    }
+}
+
+public class Main {
+    public static void main(String[] args) {
+        Scanner sc = new Scanner(System.in);
+        StudentManager sm = new StudentManager();
+        int choice;
+
+        do {
+            System.out.println("\n--- Student Management Menu ---");
+            System.out.println("1. Add Student");
+            System.out.println("2. View All");
+            System.out.println("3. Search by Roll");
+            System.out.println("4. Delete Student");
+            System.out.println("5. Sort by Name");
+            System.out.println("6. Sort by Roll");
+            System.out.println("7. Save & Exit");
+            System.out.print("Enter choice: ");
+            choice = sc.nextInt();
+
+            switch (choice) {
+                case 1:
+                    System.out.print("Enter Roll: ");
+                    int roll = sc.nextInt();
+                    sc.nextLine(); // consume newline
+                    System.out.print("Enter Name: ");
+                    String name = sc.nextLine();
+                    System.out.print("Enter Course: ");
+                    String course = sc.nextLine();
+                    sm.addStudent(new Student(roll, name, course));
+                    break;
+                case 2: sm.viewAll(); break;
+                case 3:
+                    System.out.print("Enter Roll: ");
+                    sm.searchStudent(sc.nextInt());
+                    break;
+                case 4:
+                    System.out.print("Enter Roll to delete: ");
+                    sm.deleteStudent(sc.nextInt());
+                    break;
+                case 5: sm.sortByName(); break;
+                case 6: sm.sortByRoll(); break;
+                case 7:
+                    sm.saveData();
+                    System.out.println("Exiting...");
+                    break;
+                default:
+                    System.out.println("Invalid choice.");
+            }
+        } while (choice != 7);
+    }
+}
